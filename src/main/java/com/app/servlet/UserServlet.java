@@ -52,23 +52,97 @@ public class UserServlet extends HttpServlet {
                           HttpServletResponse response)
             throws ServletException, IOException {
 
-        String username = request.getParameter("username");
-        String email = request.getParameter("email");
+        String action = request.getParameter("action");
         String id = request.getParameter("id");
-        User user = new User(username, email);
-        if(id == null) {
-            boolean created = userDAO.create(user);
 
-            if (created) {
+
+        // DELETE
+        if ("delete".equals(action)) {
+
+            boolean deleted =
+                    userDAO.delete(Integer.parseInt(id));
+
+            if (deleted) {
                 response.sendRedirect(
                         request.getContextPath() + "/users"
                 );
             }
-        }else{
+
+            return;
+        }
+
+
+        // Data needed for CREATE / EDIT
+        String username = request.getParameter("username");
+        String email = request.getParameter("email");
+
+
+        // Username Validation
+        boolean nonValidUsername =
+                username == null || username.isBlank();
+
+        if (nonValidUsername) {
+
+            request.setAttribute(
+                    "error",
+                    "Username is required"
+            );
+
+            request.getRequestDispatcher("/user-form.jsp")
+                    .forward(request, response);
+
+            return;
+        }
+
+
+        // Email Validation
+        String emailRegex =
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
+        boolean nonValidEmail =
+                email == null
+                        || email.isBlank()
+                        || !email.matches(emailRegex);
+
+        if (nonValidEmail) {
+            request.setAttribute(
+                    "error",
+                    "Email is not valid"
+            );
+
+            request.getRequestDispatcher("/user-form.jsp")
+                    .forward(request, response);
+
+            return;
+        }
+
+
+        // EDIT
+        if ("edit".equals(action)) {
+
+            User user = new User(username, email);
             user.setId(Integer.parseInt(id));
+
             boolean updated = userDAO.update(user);
 
             if (updated) {
+                response.sendRedirect(
+                        request.getContextPath() + "/users"
+                );
+            }
+
+            return;
+        }
+
+
+        // CREATE
+        if ("create".equals(action)) {
+
+            User user = new User(username, email);
+
+            boolean created = userDAO.create(user);
+
+            if (created) {
                 response.sendRedirect(
                         request.getContextPath() + "/users"
                 );
