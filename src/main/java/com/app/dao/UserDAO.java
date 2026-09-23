@@ -48,21 +48,19 @@ public class UserDAO {
     public List<User> findAll() {
 
         String sql = """
-            SELECT * FROM users
-            """;
+        SELECT * FROM users
+        """;
 
         List<User> users = new ArrayList<>();
 
         try (
-                Connection connection =
-                        DatabaseConnection.getConnection();
-
-                PreparedStatement statement =
-                        connection.prepareStatement(sql);
-
-                ResultSet resultSet =
-                        statement.executeQuery()
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet resultSet = statement.executeQuery()
         ) {
+
+            System.out.println("Database: " + connection.getCatalog());
+            System.out.println("URL: " + connection.getMetaData().getURL());
 
             while (resultSet.next()) {
 
@@ -74,6 +72,8 @@ public class UserDAO {
 
                 users.add(user);
             }
+
+            System.out.println("Users from DB: " + users.size());
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -96,12 +96,12 @@ public class UserDAO {
                 PreparedStatement statement =
                         connection.prepareStatement(sql);
 
-                ResultSet resultSet =
-                        statement.executeQuery()
+
         ) {
 
             statement.setInt(1, id);
-
+            ResultSet resultSet =
+                    statement.executeQuery();
             if (resultSet.next()) {
 
                 return new User(
