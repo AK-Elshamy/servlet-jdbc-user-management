@@ -12,12 +12,46 @@ import java.util.List;
 
 public class UserDAO {
 
+    public User findByUsernameAndPassword(String username, String password) {
 
+        String sql = """
+            SELECT * FROM users
+            WHERE username = ?
+            AND password = ?
+            """;
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(1, username);
+            statement.setString(2, password);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    return new User(
+                            resultSet.getInt("id"),
+                            resultSet.getString("username"),
+                            resultSet.getString("email"),
+                            resultSet.getString("password")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
     public boolean create(User user) {
 
         String sql = """
-                INSERT INTO users (username, email)
-                VALUES (?, ?)
+                INSERT INTO users (username, email, password)
+                VALUES (?, ?, ?)
                 """;
 
         try (
@@ -30,6 +64,7 @@ public class UserDAO {
 
             statement.setString(1, user.getUsername());
             statement.setString(2, user.getEmail());
+            statement.setString(3, user.getPassword());
 
             return statement.executeUpdate() > 0;
 
@@ -44,14 +79,13 @@ public class UserDAO {
 
     }
 
-
-    public List<User> findAll() {
+    public int countUsers() {
 
         String sql = """
-        SELECT * FROM users
-        """;
+            SELECT COUNT(*) FROM users
+            """;
 
-        List<User> users = new ArrayList<>();
+        int count = 0;
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
@@ -59,21 +93,49 @@ public class UserDAO {
                 ResultSet resultSet = statement.executeQuery()
         ) {
 
-            System.out.println("Database: " + connection.getCatalog());
-            System.out.println("URL: " + connection.getMetaData().getURL());
-
-            while (resultSet.next()) {
-
-                User user = new User(
-                        resultSet.getInt("id"),
-                        resultSet.getString("username"),
-                        resultSet.getString("email")
-                );
-
-                users.add(user);
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
             }
 
-            System.out.println("Users from DB: " + users.size());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return count;
+    }
+
+
+    public List<User> findAll(int limit, int offset) {
+
+        String sql = """
+            SELECT * FROM users
+            LIMIT ? OFFSET ?
+            """;
+
+        List<User> users = new ArrayList<>();
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(1, limit);
+            statement.setInt(2, offset);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                while (resultSet.next()) {
+
+                    User user = new User(
+                            resultSet.getInt("id"),
+                            resultSet.getString("username"),
+                            resultSet.getString("email")
+                    );
+
+                    users.add(user);
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -170,5 +232,42 @@ public class UserDAO {
         }
     }
 
+    public List<User> searchByUsername(String keyword) {
 
+        String sql = """
+            SELECT * FROM users
+            WHERE username LIKE ?
+            """;
+
+        List<User> users = new ArrayList<>();
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sql)
+
+
+        ) {
+            preparedStatement.setString(1,  keyword + "%");
+
+            try( ResultSet resultSet = preparedStatement.executeQuery();){
+                while (resultSet.next()){
+                    var user = new User(
+                            resultSet.getInt("id"),
+                            resultSet.getString("username"),
+                            resultSet.getString("email")
+
+                    );
+                    users.add(user);
+                }
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return users;
+    }
 }

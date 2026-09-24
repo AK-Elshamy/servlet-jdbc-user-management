@@ -24,6 +24,18 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+        String keyword = request.getParameter("keyword");
+
+        if(keyword != null && ! keyword.isBlank()){
+
+            List<User> users = userDAO.searchByUsername(keyword);
+            request.setAttribute("users", users);
+            request.getRequestDispatcher("/users.jsp").forward(request, response);
+            return;
+        }
+
+
+
        String action = request.getParameter("action");
        if("new".equals(action)){
            request.getRequestDispatcher("/user-form.jsp").forward(request, response);
@@ -41,9 +53,29 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        List<User> users = userDAO.findAll();
+        String pageParameter = request.getParameter("page");
+
+        int numberOfPage = 1;
+
+        if (pageParameter != null) {
+            numberOfPage = Integer.parseInt(pageParameter);
+        }
+
+
+
+        final int LIMIT = 3;
+
+        int offset = (numberOfPage - 1) * LIMIT;
+        int totalUsers = userDAO.countUsers();
+        int totalPages = (totalUsers + LIMIT - 1) / LIMIT;
+        List<User> users = userDAO.findAll(LIMIT, offset);
+
         request.setAttribute("users", users);
-        request.getRequestDispatcher("/users.jsp").forward(request, response);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("currentPage", numberOfPage);
+
+        request.getRequestDispatcher("/users.jsp")
+                .forward(request, response);
     }
 
 

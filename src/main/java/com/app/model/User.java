@@ -5,6 +5,7 @@ public class User {
     private int id;
     private String username;
     private String email;
+    private String password;
 
     public User() {
     }
@@ -15,9 +16,30 @@ public class User {
         this.email = email;
     }
 
+    public User(int id, String username, String email, String password) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public User(String username, String email) {
         this.username = username;
         this.email = email;
+    }
+
+    public User(String username, String email, String password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
     }
 
     public int getId() {
