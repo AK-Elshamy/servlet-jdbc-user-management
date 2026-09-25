@@ -1,15 +1,18 @@
 package com.app.servlet;
 
+import java.io.IOException;
+
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.app.dao.UserDAO;
 import com.app.model.User;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
-import java.io.IOException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -18,16 +21,16 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)
+            HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher("/login.jsp")
+        request.getRequestDispatcher("/WEB-INF/views/login.jsp")
                 .forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         String username = request.getParameter("username");
@@ -41,17 +44,14 @@ public class LoginServlet extends HttpServlet {
                     "Username and password are required."
             );
 
-            request.getRequestDispatcher("/login.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp")
                     .forward(request, response);
 
             return;
         }
 
-        User user =
-                userDAO.findByUsernameAndPassword(
-                        username,
-                        password
-                );
+        User user
+                = userDAO.findByUsername(username);
 
         if (user == null) {
 
@@ -60,7 +60,20 @@ public class LoginServlet extends HttpServlet {
                     "Invalid username or password."
             );
 
-            request.getRequestDispatcher("/login.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp")
+                    .forward(request, response);
+
+            return;
+        }
+
+        if (!BCrypt.checkpw(password, user.getPassword())) {
+
+            request.setAttribute(
+                    "error",
+                    "Invalid username or password."
+            );
+
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp")
                     .forward(request, response);
 
             return;

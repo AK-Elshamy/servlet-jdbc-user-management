@@ -1,8 +1,5 @@
 package com.app.dao;
 
-import com.app.model.User;
-import com.app.util.DatabaseConnection;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,43 +7,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.app.model.User;
+import com.app.util.DatabaseConnection;
+
 public class UserDAO {
 
-    public User findByUsernameAndPassword(String username, String password) {
-
-        String sql = """
-            SELECT * FROM users
-            WHERE username = ?
-            AND password = ?
-            """;
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement =
-                        connection.prepareStatement(sql)
-        ) {
-
-            statement.setString(1, username);
-            statement.setString(2, password);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-
-                if (resultSet.next()) {
-                    return new User(
-                            resultSet.getInt("id"),
-                            resultSet.getString("username"),
-                            resultSet.getString("email"),
-                            resultSet.getString("password")
-                    );
-                }
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
     public boolean create(User user) {
 
         String sql = """
@@ -55,12 +20,9 @@ public class UserDAO {
                 """;
 
         try (
-                Connection connection =
-                        DatabaseConnection.getConnection();
-
-                PreparedStatement statement =
-                        connection.prepareStatement(sql)
-        ) {
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
 
             statement.setString(1, user.getUsername());
             statement.setString(2, user.getEmail());
@@ -73,10 +35,6 @@ public class UserDAO {
             return false;
         }
 
-
-
-
-
     }
 
     public int countUsers() {
@@ -88,10 +46,7 @@ public class UserDAO {
         int count = 0;
 
         try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()
-        ) {
+                Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql); ResultSet resultSet = statement.executeQuery()) {
 
             if (resultSet.next()) {
                 count = resultSet.getInt(1);
@@ -104,7 +59,6 @@ public class UserDAO {
         return count;
     }
 
-
     public List<User> findAll(int limit, int offset) {
 
         String sql = """
@@ -115,10 +69,8 @@ public class UserDAO {
         List<User> users = new ArrayList<>();
 
         try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement =
-                        connection.prepareStatement(sql)
-        ) {
+                Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
 
             statement.setInt(1, limit);
             statement.setInt(2, offset);
@@ -152,18 +104,13 @@ public class UserDAO {
             """;
 
         try (
-                Connection connection =
-                        DatabaseConnection.getConnection();
-
-                PreparedStatement statement =
-                        connection.prepareStatement(sql);
-
-
-        ) {
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql);) {
 
             statement.setInt(1, id);
-            ResultSet resultSet =
-                    statement.executeQuery();
+            ResultSet resultSet
+                    = statement.executeQuery();
             if (resultSet.next()) {
 
                 return new User(
@@ -189,12 +136,9 @@ public class UserDAO {
             """;
 
         try (
-                Connection connection =
-                        DatabaseConnection.getConnection();
-
-                PreparedStatement statement =
-                        connection.prepareStatement(sql)
-        ) {
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
 
             statement.setString(1, user.getUsername());
             statement.setString(2, user.getEmail());
@@ -207,6 +151,7 @@ public class UserDAO {
             return false;
         }
     }
+
     public boolean delete(int id) {
 
         String sql = """
@@ -215,12 +160,9 @@ public class UserDAO {
             """;
 
         try (
-                Connection connection =
-                        DatabaseConnection.getConnection();
-
-                PreparedStatement statement =
-                        connection.prepareStatement(sql)
-        ) {
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
 
             statement.setInt(1, id);
 
@@ -242,25 +184,20 @@ public class UserDAO {
         List<User> users = new ArrayList<>();
 
         try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sql)
+                Connection connection = DatabaseConnection.getConnection(); PreparedStatement preparedStatement
+                = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, keyword + "%");
 
-
-        ) {
-            preparedStatement.setString(1,  keyword + "%");
-
-            try( ResultSet resultSet = preparedStatement.executeQuery();){
-                while (resultSet.next()){
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                while (resultSet.next()) {
                     var user = new User(
                             resultSet.getInt("id"),
                             resultSet.getString("username"),
                             resultSet.getString("email")
-
                     );
                     users.add(user);
                 }
-            }catch (SQLException e){
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
 
@@ -269,5 +206,71 @@ public class UserDAO {
         }
 
         return users;
+    }
+
+    public User findByUsername(String username) {
+
+        String sql = """
+            SELECT * FROM users
+            WHERE username = ?
+            """;
+
+        try (
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+
+            statement.setString(1, username);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    return new User(
+                            resultSet.getInt("id"),
+                            resultSet.getString("username"),
+                            resultSet.getString("email"),
+                            resultSet.getString("password")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public User findByEmail(String email) {
+
+        String sql = """
+            SELECT * FROM users
+            WHERE email = ?
+            """;
+
+        try (
+                Connection connection
+                = DatabaseConnection.getConnection(); PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+
+            statement.setString(1, email);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    return new User(
+                            resultSet.getInt("id"),
+                            resultSet.getString("username"),
+                            resultSet.getString("email"),
+                            resultSet.getString("password")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

@@ -1,15 +1,17 @@
 package com.app.servlet;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.app.dao.UserDAO;
 import com.app.model.User;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-import java.util.List;
+import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/users")
 public class UserServlet extends HttpServlet {
@@ -17,7 +19,7 @@ public class UserServlet extends HttpServlet {
     private UserDAO userDAO;
 
     @Override
-    public void init(){
+    public void init() {
         this.userDAO = new UserDAO();
     }
 
@@ -26,22 +28,15 @@ public class UserServlet extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
 
-        if(keyword != null && ! keyword.isBlank()){
+        if (keyword != null && !keyword.isBlank()) {
 
             List<User> users = userDAO.searchByUsername(keyword);
             request.setAttribute("users", users);
-            request.getRequestDispatcher("/users.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/users.jsp").forward(request, response);
             return;
         }
 
-
-
-       String action = request.getParameter("action");
-       if("new".equals(action)){
-           request.getRequestDispatcher("/user-form.jsp").forward(request, response);
-           return;
-       }
-
+        String action = request.getParameter("action");
 
         if ("edit".equals(action)) {
 
@@ -49,7 +44,7 @@ public class UserServlet extends HttpServlet {
             int userId = Integer.parseInt(id);
             User user = userDAO.findById(userId);
             request.setAttribute("user", user);
-            request.getRequestDispatcher("/user-form.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/user-form.jsp").forward(request, response);
             return;
         }
 
@@ -60,8 +55,6 @@ public class UserServlet extends HttpServlet {
         if (pageParameter != null) {
             numberOfPage = Integer.parseInt(pageParameter);
         }
-
-
 
         final int LIMIT = 3;
 
@@ -74,27 +67,35 @@ public class UserServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("currentPage", numberOfPage);
 
-        request.getRequestDispatcher("/users.jsp")
+        request.getRequestDispatcher("/WEB-INF/views/users.jsp")
                 .forward(request, response);
     }
 
-
     @Override
     protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
         String id = request.getParameter("id");
 
-
         // DELETE
         if ("delete".equals(action)) {
 
-            boolean deleted =
-                    userDAO.delete(Integer.parseInt(id));
+            HttpSession session = request.getSession();
+            User loggedInUser = (User) session.getAttribute("user");
+            User userDelete = userDAO.findById(Integer.parseInt(id));
+            boolean deleted
+                    = userDAO.delete(Integer.parseInt(id));
 
             if (deleted) {
+
+                if (loggedInUser != null && loggedInUser.getId() == userDelete.getId()) {
+                    response.sendRedirect(
+                            request.getContextPath() + "/logout"
+                    );
+                    return;
+                }
                 response.sendRedirect(
                         request.getContextPath() + "/users"
                 );
@@ -103,15 +104,13 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-
         // Data needed for CREATE / EDIT
         String username = request.getParameter("username");
         String email = request.getParameter("email");
 
-
         // Username Validation
-        boolean nonValidUsername =
-                username == null || username.isBlank();
+        boolean nonValidUsername
+                = username == null || username.isBlank();
 
         if (nonValidUsername) {
 
@@ -120,21 +119,20 @@ public class UserServlet extends HttpServlet {
                     "Username is required"
             );
 
-            request.getRequestDispatcher("/user-form.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/user-form.jsp")
                     .forward(request, response);
 
             return;
         }
 
-
         // Email Validation
-        String emailRegex =
-                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        String emailRegex
+                = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 
-        boolean nonValidEmail =
-                email == null
-                        || email.isBlank()
-                        || !email.matches(emailRegex);
+        boolean nonValidEmail
+                = email == null
+                || email.isBlank()
+                || !email.matches(emailRegex);
 
         if (nonValidEmail) {
             request.setAttribute(
@@ -142,12 +140,11 @@ public class UserServlet extends HttpServlet {
                     "Email is not valid"
             );
 
-            request.getRequestDispatcher("/user-form.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/user-form.jsp")
                     .forward(request, response);
 
             return;
         }
-
 
         // EDIT
         if ("edit".equals(action)) {
@@ -166,19 +163,5 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-
-        // CREATE
-        if ("create".equals(action)) {
-
-            User user = new User(username, email);
-
-            boolean created = userDAO.create(user);
-
-            if (created) {
-                response.sendRedirect(
-                        request.getContextPath() + "/users"
-                );
-            }
-        }
     }
 }

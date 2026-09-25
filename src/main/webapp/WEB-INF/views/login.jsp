@@ -152,7 +152,7 @@
 
     <div class="switch-link">
         Don't have an account?
-        <a href="${pageContext.request.contextPath}/register.jsp">Register here</a>
+        <a href="${pageContext.request.contextPath}/register">Register here</a>
     </div>
 </div>
 

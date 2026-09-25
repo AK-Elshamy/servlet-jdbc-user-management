@@ -271,12 +271,12 @@
     <!-- Header Section -->
     <div class="header">
         <h1>Users</h1>
-        <a href="${pageContext.request.contextPath}/users?action=new" class="add-button">+ Add User</a>
+        <a href="${pageContext.request.contextPath}/logout" class="add-button">+ Add User</a>
     </div>
 
     <!-- Search Section -->
     <form class="search-bar" method="get" action="${pageContext.request.contextPath}/users">
-        <input type="text" name="keyword" value="${param.keyword}" placeholder="Search by name or email...">
+        <input type="text" name="keyword" value="${param.keyword}" placeholder="Search by keyword...">
         <button type="submit" class="search-button">Search</button>
 
         <c:if test="${not empty param.keyword}">

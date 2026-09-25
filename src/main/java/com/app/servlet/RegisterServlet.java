@@ -1,15 +1,17 @@
 package com.app.servlet;
 
+import java.io.IOException;
+
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.app.dao.UserDAO;
 import com.app.model.User;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
-import java.io.IOException;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -17,8 +19,13 @@ public class RegisterServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
 
     @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         String username = request.getParameter("username");
@@ -32,15 +39,15 @@ public class RegisterServlet extends HttpServlet {
                     "Username must be at least 4 characters long."
             );
 
-            request.getRequestDispatcher("/register.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
                     .forward(request, response);
 
             return;
         }
 
         // Email validation
-        String emailRegex =
-                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        String emailRegex
+                = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
 
         if (email == null || !email.trim().matches(emailRegex)) {
             request.setAttribute(
@@ -48,29 +55,56 @@ public class RegisterServlet extends HttpServlet {
                     "Please enter a valid email address."
             );
 
-            request.getRequestDispatcher("/register.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
                     .forward(request, response);
 
             return;
         }
 
         // Password validation
-        String passwordRegex =
-                "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])" +
-                        "[A-Za-z\\d@$!%*#?&]{8,}$";
+        String passwordRegex
+                = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])"
+                + "[A-Za-z\\d@$!%*#?&]{8,}$";
 
         if (password == null || !password.matches(passwordRegex)) {
             request.setAttribute(
                     "error",
-                    "Password must be at least 8 characters " +
-                            "and include a number and special character."
+                    "Password must be at least 8 characters "
+                    + "and include a number and special character."
             );
 
-            request.getRequestDispatcher("/register.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
                     .forward(request, response);
 
             return;
         }
+
+        User foundUser = userDAO.findByUsername(username);
+        if (foundUser != null) {
+            request.setAttribute(
+                    "error",
+                    "Username already exists. Please choose another."
+            );
+
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
+                    .forward(request, response);
+
+            return;
+        }
+        foundUser = userDAO.findByEmail(email);
+        if (foundUser != null) {
+            request.setAttribute(
+                    "error",
+                    "Email already registered. Please use another."
+            );
+
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
+                    .forward(request, response);
+
+            return;
+        }
+
+        password = BCrypt.hashpw(password, BCrypt.gensalt());
 
         User user = new User(username, email, password);
 
@@ -82,20 +116,14 @@ public class RegisterServlet extends HttpServlet {
                     "Registration failed."
             );
 
-            request.getRequestDispatcher("/register.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp")
                     .forward(request, response);
 
             return;
         }
 
-        // Create login session
-        HttpSession session = request.getSession();
-
-        session.setAttribute("username", username);
-        session.setAttribute("email", email);
-
         response.sendRedirect(
-                request.getContextPath() + "/users"
+                request.getContextPath() + "/login"
         );
     }
 }
